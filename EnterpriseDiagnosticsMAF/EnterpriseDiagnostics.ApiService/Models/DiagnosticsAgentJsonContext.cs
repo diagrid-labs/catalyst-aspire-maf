@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using EnterpriseDiagnostics.ApiService.Workflows;
 
 namespace EnterpriseDiagnostics.ApiService.Models;
 
@@ -7,5 +6,6 @@ namespace EnterpriseDiagnostics.ApiService.Models;
 [JsonSerializable(typeof(HullIntegrityResult))]
 [JsonSerializable(typeof(LifeSupportResult))]
 [JsonSerializable(typeof(WarpCoreResult))]
-[JsonSerializable(typeof(EnterpriseDiagnosticsWorkflow.BridgeAck))]
+[JsonSerializable(typeof(DiagnosticsSummaryResult))]
+[JsonSerializable(typeof(DiagnosticsSeverity))]
 public partial class DiagnosticsAgentJsonContext : JsonSerializerContext;

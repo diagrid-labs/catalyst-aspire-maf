@@ -1,6 +1,6 @@
-using System.Text.Json.Serialization;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Runtime;
+using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using Microsoft.Extensions.Logging;
 
@@ -16,6 +16,7 @@ public sealed partial class EnterpriseDiagnosticsWorkflow : Workflow<Diagnostics
         var hullAgent = context.GetAgent("HullIntegrityAgent");
         var lifeSupportAgent = context.GetAgent("LifeSupportAgent");
         var warpCoreAgent = context.GetAgent("WarpCoreAgent");
+        var summarizeAgent = context.GetAgent("SummarizeDiagnosticsAgent");
 
         var hullTask = context.RunAgentAndDeserializeAsync<HullIntegrityResult>(
             agent: hullAgent,
@@ -42,26 +43,29 @@ public sealed partial class EnterpriseDiagnosticsWorkflow : Workflow<Diagnostics
             ?? throw new InvalidOperationException("WarpCoreAgent returned no usable response.");
 
         var hasCritical =
-            hull.Severity == "critical" ||
-            lifeSupport.Severity == "critical" ||
-            warpCore.Severity == "critical";
+            hull.Severity == DiagnosticsSeverity.CRITICAL ||
+            lifeSupport.Severity == DiagnosticsSeverity.CRITICAL ||
+            warpCore.Severity == DiagnosticsSeverity.CRITICAL;
 
-        var summary =
-            $"Hull: {hull.Severity} ({hull.IntegrityPercent}%). " +
-            $"Life Support: {lifeSupport.Severity} (O2 {lifeSupport.OxygenPercent}%, CO2 {lifeSupport.Co2Percent}%). " +
-            $"Warp Core: {warpCore.Severity} (Dilithium {warpCore.DilithiumStability}%, Plasma {warpCore.PlasmaFlowRate}%). " +
-            $"Overall status: {(hasCritical ? "CRITICAL" : "STABLE")}.";
+        var summaryResult = await context.RunAgentAndDeserializeAsync<DiagnosticsSummaryResult>(
+            agent: summarizeAgent,
+            message: $"Stardate {input.Stardate}. " +
+                     $"Hull: severity={hull.Severity}, integrity={hull.IntegrityPercent}%, notes={hull.Notes}. " +
+                     $"Life Support: severity={lifeSupport.Severity}, O2={lifeSupport.OxygenPercent}%, CO2={lifeSupport.Co2Percent}%, notes={lifeSupport.Notes}. " +
+                     $"Warp Core: severity={warpCore.Severity}, dilithium={warpCore.DilithiumStability}%, plasma={warpCore.PlasmaFlowRate}%, notes={warpCore.Notes}. " +
+                     $"Overall: {(hasCritical ? "CRITICAL" : "STABLE")}. " +
+                     $"Return strict JSON: {{\"summary\": string}}.",
+            logger: logger)
+            ?? throw new InvalidOperationException("SummarizeDiagnosticsAgent returned no usable response.");
+        var summary = summaryResult.Summary;
 
         var bridgeNotified = false;
         if (hasCritical)
         {
             LogCritical(logger, context.InstanceId);
-            var bridgeAgent = context.GetAgent("BridgeNotificationAgent");
-            var ack = await context.RunAgentAndDeserializeAsync<BridgeAck>(
-                agent: bridgeAgent,
-                message: $"Stardate {input.Stardate}. Diagnostic summary: {summary}. Decide whether the bridge has acknowledged this alert and return strict JSON: {{\"acknowledged\": true|false}}.",
-                logger: logger);
-            bridgeNotified = ack.Acknowledged;
+            bridgeNotified = await context.CallActivityAsync<bool>(
+                nameof(NotifyBridgeActivity),
+                new NotifyBridgeInput(input.Stardate, summary));
         }
 
         return new DiagnosticsOutput(
@@ -72,9 +76,6 @@ public sealed partial class EnterpriseDiagnosticsWorkflow : Workflow<Diagnostics
             summary,
             bridgeNotified);
     }
-
-    public readonly record struct BridgeAck(
-        [property: JsonPropertyName("acknowledged")] bool Acknowledged);
 
     [LoggerMessage(LogLevel.Information, "Starting Enterprise diagnostics workflow {InstanceId} for stardate {Stardate}")]
     static partial void LogStart(ILogger logger, string InstanceId, string Stardate);
