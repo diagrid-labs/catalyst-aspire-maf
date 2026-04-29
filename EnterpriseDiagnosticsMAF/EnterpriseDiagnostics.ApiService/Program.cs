@@ -1,44 +1,28 @@
+using Dapr.AI.Conversation.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.AI;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using EnterpriseDiagnostics.ApiService.Workflows;
-using OpenAI;
-
-const string ChatClientKey = "diagnostics-llm";
-const string Model = "gpt-4o-mini";
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
-    ?? throw new InvalidOperationException("OPENAI_API_KEY environment variable is not set.");
-
-builder.Services.AddKeyedSingleton<IChatClient>(ChatClientKey, (_, _) =>
-    new OpenAIClient(apiKey).GetChatClient(Model).AsIChatClient());
+builder.Services.AddDaprConversationClient();
 
 builder.Services.AddDaprAgents(
-    opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default),
-    opt =>
-    {
-        opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
-        opt.RegisterActivity<NotifyBridgeActivity>();
-    })
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.Hull, name: "HullIntegrityAgent"))
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.LifeSupport, name: "LifeSupportAgent"))
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.WarpCore, name: "WarpCoreAgent"))
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.Summarize, name: "SummarizeDiagnosticsAgent"));
+        opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default),
+        opt =>
+        {
+            opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
+            opt.RegisterActivity<NotifyBridgeActivity>();
+        })
+    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull)
+    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport)
+    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore)
+    .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize);
 
 var app = builder.Build();
 
