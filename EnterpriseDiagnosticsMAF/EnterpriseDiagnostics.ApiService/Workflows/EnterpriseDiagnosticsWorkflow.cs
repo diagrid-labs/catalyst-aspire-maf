@@ -43,9 +43,9 @@ public sealed partial class EnterpriseDiagnosticsWorkflow : Workflow<Diagnostics
             ?? throw new InvalidOperationException("WarpCoreAgent returned no usable response.");
 
         var hasCritical =
-            hull.Severity == DiagnosticsSeverity.CRITICAL ||
-            lifeSupport.Severity == DiagnosticsSeverity.CRITICAL ||
-            warpCore.Severity == DiagnosticsSeverity.CRITICAL;
+            hull.Severity == "CRITICAL" ||
+            lifeSupport.Severity == "CRITICAL" ||
+            warpCore.Severity == "CRITICAL";
 
         var summaryResult = await context.RunAgentAndDeserializeAsync<DiagnosticsSummaryResult>(
             agent: summarizeAgent,

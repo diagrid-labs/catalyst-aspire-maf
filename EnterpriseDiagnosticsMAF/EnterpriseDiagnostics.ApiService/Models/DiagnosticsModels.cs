@@ -12,21 +12,24 @@ public record DiagnosticsOutput(
     string Summary,
     bool BridgeNotified);
 
-public record HullIntegrityResult(double IntegrityPercent, DiagnosticsSeverity Severity, string Notes);
+public record HullIntegrityResult(
+    [property: JsonPropertyName("integrityPercent")] double IntegrityPercent,
+    [property: JsonPropertyName("severity")] string Severity,
+    [property: JsonPropertyName("notes")] string Notes);
 
-public record LifeSupportResult(double OxygenPercent, double Co2Percent, DiagnosticsSeverity Severity, string Notes);
+public record LifeSupportResult(
+    [property: JsonPropertyName("oxygenPercent")] double OxygenPercent,
+    [property: JsonPropertyName("co2Percent")] double Co2Percent,
+    [property: JsonPropertyName("severity")] string Severity,
+    [property: JsonPropertyName("notes")] string Notes);
 
-public record WarpCoreResult(double DilithiumStability, double PlasmaFlowRate, DiagnosticsSeverity Severity, string Notes);
+public record WarpCoreResult(
+    [property: JsonPropertyName("dilithiumStability")] double DilithiumStability,
+    [property: JsonPropertyName("plasmaFlowRate")] double PlasmaFlowRate,
+    [property: JsonPropertyName("severity")] string Severity,
+    [property: JsonPropertyName("notes")] string Notes);
 
-public record DiagnosticsSummaryResult(string Summary);
+public record DiagnosticsSummaryResult(
+    [property: JsonPropertyName("summary")] string Summary);
 
 public record NotifyBridgeInput(string Stardate, string Summary);
-
-[JsonConverter(typeof(JsonStringEnumConverter<DiagnosticsSeverity>))]
-public enum DiagnosticsSeverity
-{
-    LOW,
-    MEDIUM,
-    HIGH,
-    CRITICAL
-}
