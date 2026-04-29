@@ -1,11 +1,11 @@
 # EnterpriseDiagnostics
 
-This repo contains an agentic application that runs a full diagnostic sweep on the U.S.S. Enterprise. The application performs three independent analyses in parallel — hull integrity, life support, and warp core — summarizes the results, and notifies the bridge if any analysis is marked as critical.
+A Dapr Workflow application that runs a full diagnostic sweep on the U.S.S. Enterprise. The workflow performs three independent analyses in parallel — hull integrity, life support, and warp core — summarizes the results, and notifies the bridge if any analysis is marked as critical.
 
 ## Contents
 
-- `EnterpriseDiagnostics.AppHost` — Aspire AppHost that provisions a Diagrid Catalyst project with a managed workflow state store and wires the ApiService to it.
-- `EnterpriseDiagnostics.ApiService` — ASP.NET Core service that hosts the agentic application, activities, and the HTTP endpoints used to start the application.
+- `EnterpriseDiagnostics.AppHost` — Aspire AppHost that orchestrates the Valkey state store, the Dapr sidecar, the ApiService, and the Diagrid Dev Dashboard.
+- `EnterpriseDiagnostics.ApiService` — ASP.NET Core service that hosts the Dapr workflow, activities, and the HTTP endpoints used to manage workflow instances.
 - `EnterpriseDiagnostics.ServiceDefaults` — Aspire shared project providing OpenTelemetry, health checks, service discovery, and resilience defaults.
 
 ## Architecture
@@ -14,7 +14,9 @@ The solution is built on:
 
 - **.NET 10 / ASP.NET Core** — host for the workflow service.
 - **.NET Aspire** — orchestrates the local development topology (AppHost + ServiceDefaults).
-- **Diagrid Catalyst** — managed workflow runtime based on Dapr, provisioned by the Aspire AppHost via `AddCatalystProject(...)` with `EnableManagedWorkflow = true`.
+- **Dapr Workflow** (`Dapr.Workflow`, `Dapr.Workflow.Versioning`) — durable, replay-safe orchestration on top of the Dapr sidecar.
+- **Valkey** — a Redis-compatible state store, started as a container resource by Aspire on port `16379`. Used by the Dapr actor framework for workflow state persistence.
+- **Diagrid Dev Dashboard** — a container resource that visualizes workflow instances and their execution history.
 
 ### Prerequisites
 
@@ -23,10 +25,9 @@ To run the application locally you need:
 - [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
 - [Aspire CLI](https://aspire.dev/get-started/install-cli/)
 - [Docker](https://www.docker.com/products/docker-desktop/) or [Podman](https://podman.io/docs/installation)
-- [Diagrid CLI](https://docs.diagrid.io/catalyst/references/cli-reference/install-diagrid-cli)
-- A [Diagrid Catalyst](https://www.diagrid.io/catalyst) account, signed in via `diagrid login`
+- [Dapr CLI](https://docs.dapr.io/getting-started/install-dapr-cli/) (1.17+)
 
-Workflow state is hosted by Diagrid Catalyst — no local Redis, Valkey, or Dapr sidecar setup is required.
+You do **not** need to start Redis or Valkey separately — Aspire manages the Valkey container for you.
 
 ## Workflow
 
@@ -55,12 +56,13 @@ From the solution root:
 aspire run
 ```
 
-This launches the Aspire AppHost which:
+This launches the Aspire AppHost which orchestrates:
 
-- Provisions a **Diagrid Catalyst** project (`aspire-maf`) with a managed workflow state store.
-- Starts the **ApiService** (`wf-app`) wired to that Catalyst project.
+- The **Valkey** state store container on port `16379`.
+- The **ApiService** with an attached **Dapr sidecar** that loads `Resources/statestore.yaml`.
+- The **Diagrid Dev Dashboard** container that loads `Resources/statestore-dashboard.yaml`.
 
-The Aspire dashboard opens automatically in your browser and lists all resource endpoints with live logs and traces.
+The Aspire dashboard opens automatically in your browser and lists all resource endpoints (ApiService, Dapr sidecar, Diagrid Dashboard) with live logs and traces.
 
 ## Endpoints
 
@@ -102,4 +104,11 @@ You can also drive these requests from [`EnterpriseDiagnostics.ApiService/Enterp
 
 ## Inspecting workflow execution
 
-Workflow instances run against the managed state store in your Diagrid Catalyst project. To inspect them, open the **Diagrid Catalyst console** and navigate to the `aspire-maf` project — you can browse workflow instances, view orchestration history, inspect activity inputs/outputs, and watch state transitions in real time.
+The **Diagrid Dev Dashboard** container is started by Aspire and connects to the same Valkey state store as the ApiService Dapr sidecar (via `host.docker.internal:16379`).
+
+To inspect workflow instances:
+
+1. Open the Aspire dashboard (it launches automatically on `aspire run`).
+2. Find the `diagrid-dashboard` resource in the resource list.
+3. Click the HTTP endpoint link to open the dashboard in your browser.
+4. Use the dashboard to browse workflow instances, view the orchestration history, inspect activity inputs/outputs, and watch state transitions in real time.
