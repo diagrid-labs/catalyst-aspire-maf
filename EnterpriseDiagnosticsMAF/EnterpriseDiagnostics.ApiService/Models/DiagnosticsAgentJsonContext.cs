@@ -7,5 +7,4 @@ namespace EnterpriseDiagnostics.ApiService.Models;
 [JsonSerializable(typeof(LifeSupportResult))]
 [JsonSerializable(typeof(WarpCoreResult))]
 [JsonSerializable(typeof(DiagnosticsSummaryResult))]
-[JsonSerializable(typeof(DiagnosticsSeverity))]
 public partial class DiagnosticsAgentJsonContext : JsonSerializerContext;

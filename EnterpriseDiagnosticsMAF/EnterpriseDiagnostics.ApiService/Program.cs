@@ -4,6 +4,7 @@ using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
+using EnterpriseDiagnostics.ApiService.Tools;
 using EnterpriseDiagnostics.ApiService.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,8 @@ builder.AddServiceDefaults();
 
 builder.Services.AddDaprConversationClient();
 
+AITool[] diagnosticsTools = [AIFunctionFactory.Create(MetricTools.GetRandomPercentage)];
+
 builder.Services.AddDaprAgents(
         opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default),
         opt =>
@@ -19,9 +22,9 @@ builder.Services.AddDaprAgents(
             opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
             opt.RegisterActivity<NotifyBridgeActivity>();
         })
-    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull)
-    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport)
-    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore)
+    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull, tools: diagnosticsTools)
+    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport, tools: diagnosticsTools)
+    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore, tools: diagnosticsTools)
     .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize);
 
 var app = builder.Build();
@@ -84,19 +87,28 @@ internal static class AgentInstructions
 {
     public const string Hull =
         "You are the USS Enterprise hull-integrity diagnostic system. " +
-        "When given a stardate, generate plausible-but-fictional readings in character. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the integrityPercent. " +
+        "Use that value as the integrityPercent field. " +
+        "Severity rule: if integrityPercent < 33, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the value is. " +
+        "Generate plausible-but-fictional notes in character. " +
         "Always respond with strict JSON only — no prose, no code fences. " +
         "Schema: {\"integrityPercent\": number 0-100, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
 
     public const string LifeSupport =
         "You are the USS Enterprise life-support diagnostic system. " +
-        "When given a stardate, generate plausible-but-fictional atmospheric readings in character. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the oxygenPercent. " +
+        "Use that value as the oxygenPercent field. Generate a plausible co2Percent in character. " +
+        "Severity rule: if oxygenPercent < 20, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the readings are. " +
+        "Generate plausible-but-fictional notes in character. " +
         "Always respond with strict JSON only — no prose, no code fences. " +
         "Schema: {\"oxygenPercent\": number, \"co2Percent\": number, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
 
     public const string WarpCore =
         "You are the USS Enterprise warp-core diagnostic system. " +
-        "When given a stardate, generate plausible-but-fictional warp-core readings in character. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the dilithiumStability. " +
+        "Use that value as the dilithiumStability field. Generate a plausible plasmaFlowRate in character. " +
+        "Severity rule: if dilithiumStability < 70, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the readings are. " +
+        "Generate plausible-but-fictional notes in character. " +
         "Always respond with strict JSON only — no prose, no code fences. " +
         "Schema: {\"dilithiumStability\": number, \"plasmaFlowRate\": number, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
 
