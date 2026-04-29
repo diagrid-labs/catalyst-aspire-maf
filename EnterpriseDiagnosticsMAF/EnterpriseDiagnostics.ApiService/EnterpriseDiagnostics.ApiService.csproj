@@ -14,7 +14,6 @@
   <ItemGroup>
     <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.0.5" />
     <PackageReference Include="Dapr.Workflow" Version="1.17.9" />
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.1" />
   </ItemGroup>
 
 </Project>
