@@ -8,10 +8,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EnterpriseDiagnostics.ServiceDefaults\EnterpriseDiagnostics.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\..\..\..\diagrid\dotnet-ai\src\Diagrid.AI.Microsoft.AgentFramework\Diagrid.AI.Microsoft.AgentFramework.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.0.5" />
     <PackageReference Include="Dapr.Workflow" Version="1.17.8" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.1" />
     <PackageReference Include="OpenAI" Version="2.9.1" />
