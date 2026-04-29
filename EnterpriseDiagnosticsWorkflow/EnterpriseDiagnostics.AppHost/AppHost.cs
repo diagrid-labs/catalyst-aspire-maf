@@ -3,7 +3,7 @@ using Diagrid.Aspire.Hosting.Catalyst;
 var builder = DistributedApplication.CreateBuilder(args);
 
 // This configures a new project in Catalyst with a managed state store for workflow state.
-var catalystProject = builder.AddCatalystProject("aspire-maf", new()
+var catalystProject = builder.AddCatalystProject("aspire-wf", new()
 {
     EnableManagedWorkflow = true,
 });
