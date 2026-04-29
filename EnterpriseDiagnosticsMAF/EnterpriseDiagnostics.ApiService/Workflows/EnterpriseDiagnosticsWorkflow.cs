@@ -2,7 +2,6 @@ using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Runtime;
 using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
-using Microsoft.Extensions.Logging;
 
 namespace EnterpriseDiagnostics.ApiService.Workflows;
 
@@ -77,9 +76,9 @@ public sealed partial class EnterpriseDiagnosticsWorkflow : Workflow<Diagnostics
             bridgeNotified);
     }
 
-    [LoggerMessage(LogLevel.Information, "Starting Enterprise diagnostics workflow {InstanceId} for stardate {Stardate}")]
-    static partial void LogStart(ILogger logger, string InstanceId, string Stardate);
+    [LoggerMessage(LogLevel.Information, "Starting Enterprise diagnostics workflow {InstanceId} for stardate {StarDate}")]
+    static partial void LogStart(ILogger logger, string instanceId, string starDate);
 
     [LoggerMessage(LogLevel.Warning, "Critical condition detected in workflow {InstanceId} - notifying bridge")]
-    static partial void LogCritical(ILogger logger, string InstanceId);
+    static partial void LogCritical(ILogger logger, string instanceId);
 }
