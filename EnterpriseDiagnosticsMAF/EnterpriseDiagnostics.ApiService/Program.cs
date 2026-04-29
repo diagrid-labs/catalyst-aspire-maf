@@ -1,47 +1,31 @@
+using Dapr.AI.Conversation.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.AI;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using EnterpriseDiagnostics.ApiService.Tools;
 using EnterpriseDiagnostics.ApiService.Workflows;
-using OpenAI;
-
-const string ChatClientKey = "diagnostics-llm";
-const string Model = "gpt-4o-mini";
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
-    ?? throw new InvalidOperationException("OPENAI_API_KEY environment variable is not set.");
-
-builder.Services.AddKeyedSingleton<IChatClient>(ChatClientKey, (_, _) =>
-    new OpenAIClient(apiKey).GetChatClient(Model).AsIChatClient());
+builder.Services.AddDaprConversationClient();
 
 AITool[] diagnosticsTools = [AIFunctionFactory.Create(MetricTools.GetRandomPercentage)];
 
 builder.Services.AddDaprAgents(
-    opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default),
-    opt =>
-    {
-        opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
-        opt.RegisterActivity<NotifyBridgeActivity>();
-    })
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.Hull, name: "HullIntegrityAgent", tools: diagnosticsTools))
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.LifeSupport, name: "LifeSupportAgent", tools: diagnosticsTools))
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.WarpCore, name: "WarpCoreAgent", tools: diagnosticsTools))
-    .WithAgent(sp =>
-        sp.GetRequiredKeyedService<IChatClient>(ChatClientKey)
-          .AsAIAgent(instructions: AgentInstructions.Summarize, name: "SummarizeDiagnosticsAgent"));
+        opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default),
+        opt =>
+        {
+            opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
+            opt.RegisterActivity<NotifyBridgeActivity>();
+        })
+    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull, tools: diagnosticsTools)
+    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport, tools: diagnosticsTools)
+    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore, tools: diagnosticsTools)
+    .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize);
 
 var app = builder.Build();
 
