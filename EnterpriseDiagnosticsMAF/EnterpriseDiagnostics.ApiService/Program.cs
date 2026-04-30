@@ -1,5 +1,6 @@
 using Dapr.AI.Conversation.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.AI;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService.Activities;
