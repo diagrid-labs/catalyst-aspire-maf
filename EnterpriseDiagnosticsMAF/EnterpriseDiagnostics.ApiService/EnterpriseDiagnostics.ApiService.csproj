@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.0.5" />
+    <PackageReference Include="Diagrid.AI.Microsoft.AgentFramework" Version="1.0.6" />
     <PackageReference Include="Dapr.Workflow" Version="1.17.9" />
   </ItemGroup>
 
