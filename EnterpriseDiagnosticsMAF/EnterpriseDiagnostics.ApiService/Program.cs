@@ -1,4 +1,3 @@
-using Dapr.AI.Conversation.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
@@ -6,12 +5,11 @@ using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using EnterpriseDiagnostics.ApiService.Tools;
 using EnterpriseDiagnostics.ApiService.Workflows;
+using Microsoft.Extensions.AI;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-builder.Services.AddDaprConversationClient();
 
 AITool[] diagnosticsTools = [AIFunctionFactory.Create(MetricTools.GetRandomPercentage)];
 
