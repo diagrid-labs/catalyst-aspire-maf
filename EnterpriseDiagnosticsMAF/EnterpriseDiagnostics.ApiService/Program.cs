@@ -1,6 +1,7 @@
 using Dapr.AI.Conversation.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService.Activities;
@@ -23,10 +24,10 @@ builder.Services.AddDaprAgents(
             opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
             opt.RegisterActivity<NotifyBridgeActivity>();
         })
-    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull, tools: diagnosticsTools)
-    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport, tools: diagnosticsTools)
-    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore, tools: diagnosticsTools)
-    .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize);
+    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize, serviceLifetime: ServiceLifetime.Singleton);
 
 var app = builder.Build();
 
