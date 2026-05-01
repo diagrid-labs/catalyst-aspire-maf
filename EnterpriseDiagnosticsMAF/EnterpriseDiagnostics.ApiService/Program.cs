@@ -1,19 +1,24 @@
-using Dapr.AI.Conversation.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using EnterpriseDiagnostics.ApiService.Tools;
 using EnterpriseDiagnostics.ApiService.Workflows;
+using OpenAI;
+
+const string Model = "gpt-4o-mini";
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddDaprConversationClient();
+var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+    ?? throw new InvalidOperationException("OPENAI_API_KEY environment variable is not set.");
+
+builder.Services.AddSingleton<IChatClient>(_ =>
+    new OpenAIClient(apiKey).GetChatClient(Model).AsIChatClient());
 
 AITool[] diagnosticsTools = [AIFunctionFactory.Create(MetricTools.GetRandomPercentage)];
 
@@ -24,10 +29,14 @@ builder.Services.AddDaprAgents(
             opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
             opt.RegisterActivity<NotifyBridgeActivity>();
         })
-    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
-    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
-    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
-    .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize, serviceLifetime: ServiceLifetime.Singleton);
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Hull, name: "HullIntegrityAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.LifeSupport, name: "LifeSupportAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.WarpCore, name: "WarpCoreAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Summarize, name: "SummarizeDiagnosticsAgent"));
 
 var app = builder.Build();
 
