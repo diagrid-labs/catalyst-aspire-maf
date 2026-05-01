@@ -44,22 +44,22 @@ flowchart TD
     Hull --> Join((Await all))
     Life --> Join
     Warp --> Join
-    Join --> Summary[Deterministic summary<br/>+ critical check]
-    Summary --> Critical{Any agent<br/>critical?}
-    Critical -->|yes| Notify[BridgeNotificationAgent<br/>RED ALERT]
+    Join --> Summary[SummarizeDiagnosticsAgent]
+    Summary --> Critical{Any agent<br/>CRITICAL?}
+    Critical -->|yes| Notify[NotifyBridgeActivity<br/>RED ALERT]
     Critical -->|no| Done
     Notify --> Done([DiagnosticsOutput])
 ```
 
-Each agent returns strict JSON that is deserialized — via a source-generated `JsonSerializerContext` — into a typed `record` (`HullIntegrityResult`, `LifeSupportResult`, `WarpCoreResult`, and a nested `BridgeAck`). Branching on `severity == "critical"` is performed deterministically inside the workflow so it stays replay-safe.
+Each agent returns strict JSON that is deserialized — via a source-generated `JsonSerializerContext` — into a typed `record` (`HullIntegrityResult`, `LifeSupportResult`, `WarpCoreResult`, `DiagnosticsSummaryResult`). Branching on `severity == "CRITICAL"` is performed deterministically inside the workflow so it stays replay-safe; the bridge notification is dispatched as a `NotifyBridgeActivity` (a workflow activity, not an agent).
 
 ## Run the application
 
 Set the OpenAI key in the shell that will launch Aspire, then run from the solution root:
 
 ```shell
-export OPENAI_API_KEY=sk-...      # Linux/macOS
-$env:OPENAI_API_KEY = "sk-..."    # Windows PowerShell
+export OPENAI_API_KEY=sk-...    # Linux/macOS
+$env:OPENAI_API_KEY="sk-..."    # Windows PowerShell
 
 aspire run
 ```
