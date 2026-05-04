@@ -21,18 +21,19 @@ scenes:
     title: Diagrid login
     moves:
       - action: executeTerminalCommand
-        terminalId: app
         command: diagrid login
         insertTypingMode: character-by-character
         insertTypingSpeed: 75
+        terminalId: app
   - id: scene-mon4w53b-ffi1
     title: Aspire run
     moves:
       - action: executeTerminalCommand
         command: aspire run
-        terminalId: app
         insertTypingMode: character-by-character
         insertTypingSpeed: 75
+        autoExecute: true
+        terminalId: app
   - id: scene-mon4wpr3-4i6v
     title: Start workflow
     moves:
@@ -50,7 +51,7 @@ scenes:
     moves:
       - action: replace
         path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/Tools/MetricTools.cs
-        content: Environment.Exit(1); // Let's simulate a tool failure!
+        content: '        Environment.Exit(1); // Let''s simulate a tool failure!'
         position: '10'
         highlightWholeLine: true
   - id: demo-mon5199t-j8md
@@ -78,7 +79,7 @@ scenes:
     moves:
       - action: replace
         path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/Tools/MetricTools.cs
-        content: // Environment.Exit(1); // Let's simulate a tool failure!
+        content: '        // Environment.Exit(1); // Let''s simulate a tool failure!'
         position: '10'
         highlightWholeLine: true
   - id: demo-mon52y51-8oqo
