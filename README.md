@@ -64,23 +64,33 @@ Each agent returns strict JSON that is deserialized — via a source-generated `
 
 ## Run the application
 
-Set the OpenAI key in the shell that will launch Aspire, then run from the solution root:
+1. Set the OpenAI key in the shell that will launch Aspire:
 
-```shell
-export OPENAI_API_KEY=sk-...    # Linux/macOS
-$env:OPENAI_API_KEY="sk-..."    # Windows PowerShell
+  ```shell
+  export OPENAI_API_KEY=sk-...    # Linux/macOS
+  $env:OPENAI_API_KEY="sk-..."    # Windows PowerShell
+  ```
 
-aspire run
-```
+2. Login into Diagrid Catalyst, and follow the instructions:
 
-The AppHost fails fast at startup if `OPENAI_API_KEY` is missing.
+  ```shell
+  diagrid login
+  ```
+
+3. Start the Aspire application from the `EnterpriseDiagnosticsMAF` folder:
+
+  ```shell
+  aspire run
+  ```
+
+> The AppHost fails fast at startup if `OPENAI_API_KEY` is missing.
 
 This launches the Aspire AppHost which:
 
 - Provisions a **Diagrid Catalyst** project (`aspire-wf`) with a managed workflow state store.
 - Starts the **ApiService** (`wf-app`) wired to that Catalyst project, with `OPENAI_API_KEY` forwarded into its environment.
 
-The Aspire dashboard opens automatically in your browser and lists all resource endpoints with live logs and traces.
+Navigate to the Aspire dashboard, open the Resources page, and click on the Catalyst Dashboard link. Open the `aspire-wf` project via the *Projects* item in the left menu, then select the [Workflows item](https://catalyst.diagrid.io/workflows/executions) under *Operate* in the left menu. Once you've started a workflow with the `start` endpoint you can view the workflow state here.
 
 ## Endpoints
 
