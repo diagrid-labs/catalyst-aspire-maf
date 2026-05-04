@@ -36,6 +36,16 @@ builder.Services.AddDaprAgents(
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
         .AsAIAgent(instructions: AgentInstructions.WarpCore, name: "WarpCoreAgent", tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Shields, name: "ShieldsAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Weapons, name: "WeaponsAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Navigation, name: "NavigationAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Transporter, name: "TransporterAgent", tools: diagnosticsTools))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
+        .AsAIAgent(instructions: AgentInstructions.Prioritize, name: "PrioritizeDiagnosticsAgent"))
+    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
         .AsAIAgent(instructions: AgentInstructions.Summarize, name: "SummarizeDiagnosticsAgent"));
 
 var app = builder.Build();
@@ -123,9 +133,56 @@ internal static class AgentInstructions
         "Always respond with strict JSON only — no prose, no code fences. " +
         "Schema: {\"dilithiumStability\": number, \"plasmaFlowRate\": number, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
 
+    public const string Shields =
+        "You are the USS Enterprise deflector-shield diagnostic system. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the integrityPercent. " +
+        "Use that value as the integrityPercent field. Generate a plausible harmonicFrequency in GHz in character. " +
+        "Severity rule: if integrityPercent < 40, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the readings are. " +
+        "Generate plausible-but-fictional notes in character. " +
+        "Always respond with strict JSON only — no prose, no code fences. " +
+        "Schema: {\"integrityPercent\": number 0-100, \"harmonicFrequency\": number, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
+
+    public const string Weapons =
+        "You are the USS Enterprise weapons diagnostic system. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the phaserBanksPercent. " +
+        "Use that value as the phaserBanksPercent field. Generate a plausible torpedoBaysReady count between 0 and 10 in character. " +
+        "Severity rule: if phaserBanksPercent < 30, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the readings are. " +
+        "Generate plausible-but-fictional notes in character. " +
+        "Always respond with strict JSON only — no prose, no code fences. " +
+        "Schema: {\"phaserBanksPercent\": number 0-100, \"torpedoBaysReady\": integer 0-10, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
+
+    public const string Navigation =
+        "You are the USS Enterprise navigation diagnostic system. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the sensorArrayPercent. " +
+        "Use that value as the sensorArrayPercent field. Generate a plausible inertialDamperPercent in character. " +
+        "Severity rule: if sensorArrayPercent < 50, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the readings are. " +
+        "Generate plausible-but-fictional notes in character. " +
+        "Always respond with strict JSON only — no prose, no code fences. " +
+        "Schema: {\"sensorArrayPercent\": number 0-100, \"inertialDamperPercent\": number 0-100, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
+
+    public const string Transporter =
+        "You are the USS Enterprise transporter diagnostic system. " +
+        "When given a stardate, call the GetRandomPercentage tool exactly once to obtain the patternBufferPercent. " +
+        "Use that value as the patternBufferPercent field. Generate a plausible heisenbergCompensatorPercent in character. " +
+        "Severity rule: if patternBufferPercent < 60, severity is CRITICAL; otherwise pick LOW, MEDIUM, or HIGH based on how concerning the readings are. " +
+        "Generate plausible-but-fictional notes in character. " +
+        "Always respond with strict JSON only — no prose, no code fences. " +
+        "Schema: {\"patternBufferPercent\": number 0-100, \"heisenbergCompensatorPercent\": number 0-100, \"severity\": \"LOW\"|\"MEDIUM\"|\"HIGH\"|\"CRITICAL\", \"notes\": string}.";
+
+    public const string Prioritize =
+        "You are the USS Enterprise diagnostics prioritization officer. " +
+        "Given diagnostic readings from 7 ship subsystems (each with severity and notes), produce a ranked action plan. " +
+        "Assign each system a rank 1-7 (1 = most urgent) and one of these actions: " +
+        "IMMEDIATE (requires bridge notification now), SCHEDULED (address within current shift), MONITOR (watch for change), NONE (no action). " +
+        "Consider cross-system interactions — e.g., shields down + warp-core unstable is more urgent than either alone. " +
+        "Always respond with strict JSON only — no prose, no code fences. " +
+        "Schema: {\"priorities\": [{\"system\": string, \"rank\": integer, \"action\": \"IMMEDIATE\"|\"SCHEDULED\"|\"MONITOR\"|\"NONE\", \"rationale\": string}]}. " +
+        "Return exactly 7 entries, ranked 1 through 7. The system field must match one of the provided system names.";
+
     public const string Summarize =
         "You are the USS Enterprise diagnostics summarization officer. " +
-        "Given hull, life-support, and warp-core readings for a stardate, produce a concise one-paragraph status summary in character. " +
+        "Given hull, life-support, warp-core, shields, weapons, navigation, and transporter readings plus the prioritized action plan for a stardate, " +
+        "produce a concise one-paragraph status summary in character. Lead with the highest-priority issues. " +
         "Always respond with strict JSON only — no prose, no code fences. " +
         "Schema: {\"summary\": string}.";
 }
