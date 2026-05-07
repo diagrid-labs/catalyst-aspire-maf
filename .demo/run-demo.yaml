@@ -1,0 +1,99 @@
+title: Run Demo
+description: ''
+version: 3
+scenes:
+  - id: scene-mon4saxx-dlhm
+    title: AppHost
+    moves:
+      - action: open
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.AppHost/AppHost.cs
+  - id: scene-mon4t6po-upyz
+    title: Program.cs ApiService
+    moves:
+      - action: open
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/Program.cs
+  - id: scene-mon4u2x2-fhot
+    title: EnterpriseDiagnosticsWorkflow.cs
+    moves:
+      - action: open
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/Workflows/EnterpriseDiagnosticsWorkflow.cs
+  - id: scene-mon4uvv6-egmc
+    title: Diagrid login
+    moves:
+      - action: executeTerminalCommand
+        command: diagrid login
+        insertTypingMode: character-by-character
+        insertTypingSpeed: 75
+        terminalId: app
+  - id: scene-mon4w53b-ffi1
+    title: Aspire run
+    moves:
+      - action: executeTerminalCommand
+        command: aspire run
+        insertTypingMode: character-by-character
+        insertTypingSpeed: 75
+        autoExecute: true
+        terminalId: app
+  - id: scene-mon4wpr3-4i6v
+    title: Start workflow
+    moves:
+      - action: open
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/EnterpriseDiagnostics.ApiService.http
+      - action: showInfoMessage
+        message: Check the Catalyst web console
+  - id: scene-mon4xgag-jt26
+    title: Stop app
+    moves:
+      - action: sendKeybinding
+        keybinding: ctrl+c
+  - id: scene-mon4za0q-p82q
+    title: Introduce tool failure
+    moves:
+      - action: replace
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/Tools/MetricTools.cs
+        content: '        Environment.Exit(1); // Let''s simulate a tool failure!'
+        position: '10'
+        highlightWholeLine: true
+  - id: demo-mon5199t-j8md
+    title: Aspire run (tool failure)
+    moves:
+      - action: executeTerminalCommand
+        command: aspire run
+        terminalId: app
+        insertTypingMode: character-by-character
+        insertTypingSpeed: 75
+  - id: demo-mon51jrw-ulxx
+    title: Start workflow (tool failure)
+    moves:
+      - action: open
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/EnterpriseDiagnostics.ApiService.http
+      - action: showInfoMessage
+        message: Check the Catalyst web console
+  - id: demo-mon51u01-miif
+    title: Stop app (tool failure)
+    moves:
+      - action: sendKeybinding
+        keybinding: ctrl+c
+  - id: demo-mon52665-pva1
+    title: Fix tool failure
+    moves:
+      - action: replace
+        path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/Tools/MetricTools.cs
+        content: '        // Environment.Exit(1); // Let''s simulate a tool failure!'
+        position: '10'
+        highlightWholeLine: true
+  - id: demo-mon52y51-8oqo
+    title: Aspire run (after tool fix)
+    moves:
+      - action: executeTerminalCommand
+        command: aspire run
+        terminalId: app
+        insertTypingMode: character-by-character
+        insertTypingSpeed: 75
+      - action: showInfoMessage
+        message: Check the Catalyst web console
+  - id: demo-mon53djf-smqc
+    title: Stop app (after tool fix)
+    moves:
+      - action: sendKeybinding
+        keybinding: ctrl+c

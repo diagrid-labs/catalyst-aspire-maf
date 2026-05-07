@@ -1,11 +1,11 @@
 # EnterpriseDiagnostics
 
-This repo contains an agentic application that runs a full diagnostic sweep on the U.S.S. Enterprise. The application runs three independent LLM-driven analyses in parallel — hull integrity, life support, and warp core — composes a deterministic summary, and (when any analysis is critical) calls a bridge-notification agent to acknowledge the alert.
+This repo contains an agentic application that runs a full diagnostic sweep on the U.S.S. Enterprise. The application runs seven independent LLM-driven analyses in parallel — hull integrity, life support, warp core, shields, weapons, navigation, and transporter — has a prioritization agent rank the systems and assign actions, composes a deterministic summary, and (when any system is flagged for `IMMEDIATE` action) dispatches a bridge-notification activity to acknowledge the alert.
 
 ## Contents
 
 - `EnterpriseDiagnostics.AppHost` — Aspire AppHost that provisions a Diagrid Catalyst project with a managed workflow state store, wires the ApiService to it, and forwards `OPENAI_API_KEY` to the service.
-- `EnterpriseDiagnostics.ApiService` — ASP.NET Core service that hosts the diagnostics workflow, the four agents, and the HTTP endpoints used to start and observe runs.
+- `EnterpriseDiagnostics.ApiService` — ASP.NET Core service that hosts the diagnostics workflow, the nine agents, and the HTTP endpoints used to start and observe runs.
 - `EnterpriseDiagnostics.ServiceDefaults` — Aspire shared project providing OpenTelemetry, health checks, service discovery, and resilience defaults.
 
 ## Architecture
@@ -41,37 +41,56 @@ flowchart TD
     Fan --> Hull[HullIntegrityAgent]
     Fan --> Life[LifeSupportAgent]
     Fan --> Warp[WarpCoreAgent]
+    Fan --> Shields[ShieldsAgent]
+    Fan --> Weapons[WeaponsAgent]
+    Fan --> Nav[NavigationAgent]
+    Fan --> Trans[TransporterAgent]
     Hull --> Join((Await all))
     Life --> Join
     Warp --> Join
-    Join --> Summary[Deterministic summary<br/>+ critical check]
-    Summary --> Critical{Any agent<br/>critical?}
-    Critical -->|yes| Notify[BridgeNotificationAgent<br/>RED ALERT]
-    Critical -->|no| Done
+    Shields --> Join
+    Weapons --> Join
+    Nav --> Join
+    Trans --> Join
+    Join --> Prioritize[PrioritizeDiagnosticsAgent]
+    Prioritize --> Summary[SummarizeDiagnosticsAgent]
+    Summary --> Immediate{Any priority<br/>IMMEDIATE?}
+    Immediate -->|yes| Notify[NotifyBridgeActivity<br/>RED ALERT]
+    Immediate -->|no| Done
     Notify --> Done([DiagnosticsOutput])
 ```
 
-Each agent returns strict JSON that is deserialized — via a source-generated `JsonSerializerContext` — into a typed `record` (`HullIntegrityResult`, `LifeSupportResult`, `WarpCoreResult`, and a nested `BridgeAck`). Branching on `severity == "critical"` is performed deterministically inside the workflow so it stays replay-safe.
+Each agent returns strict JSON that is deserialized — via a source-generated `JsonSerializerContext` — into a typed `record` (`HullIntegrityResult`, `LifeSupportResult`, `WarpCoreResult`, `ShieldsResult`, `WeaponsResult`, `NavigationResult`, `TransporterResult`, `PrioritizationResult`, `DiagnosticsSummaryResult`). After all seven diagnostics complete, the `PrioritizeDiagnosticsAgent` ranks them 1–7 and assigns each an action (`IMMEDIATE`, `SCHEDULED`, `MONITOR`, `NONE`); the `SummarizeDiagnosticsAgent` then produces the final summary. Branching on `action == "IMMEDIATE"` is performed deterministically inside the workflow so it stays replay-safe; the bridge notification is dispatched as a `NotifyBridgeActivity` (a workflow activity, not an agent).
 
 ## Run the application
 
-Set the OpenAI key in the shell that will launch Aspire, then run from the solution root:
+1. Set the OpenAI key in the shell that will launch Aspire:
 
-```shell
-export OPENAI_API_KEY=sk-...      # Linux/macOS
-$env:OPENAI_API_KEY = "sk-..."    # Windows PowerShell
+  ```shell
+  export OPENAI_API_KEY=sk-...    # Linux/macOS
+  $env:OPENAI_API_KEY="sk-..."    # Windows PowerShell
+  ```
 
-aspire run
-```
+2. Login into Diagrid Catalyst, and follow the instructions:
 
-The AppHost fails fast at startup if `OPENAI_API_KEY` is missing.
+  ```shell
+  diagrid login
+  ```
+
+3. Start the Aspire application from the `EnterpriseDiagnosticsMAF` folder:
+
+  ```shell
+  aspire run
+  ```
+
+> The AppHost fails fast at startup if `OPENAI_API_KEY` is missing.
 
 This launches the Aspire AppHost which:
 
 - Provisions a **Diagrid Catalyst** project (`aspire-wf`) with a managed workflow state store.
 - Starts the **ApiService** (`wf-app`) wired to that Catalyst project, with `OPENAI_API_KEY` forwarded into its environment.
 
-The Aspire dashboard opens automatically in your browser and lists all resource endpoints with live logs and traces.
+Navigate to the Aspire dashboard, open the Resources page, and click on the Catalyst Dashboard link. Open the `aspire-wf` project via the *Projects* item in the left menu, then select the [Workflows item](https://catalyst.diagrid.io/workflows/executions) under *Operate* in the left menu. Once you've started a workflow with the `start` endpoint you can view the workflow state here.
 
 ## Endpoints
 
