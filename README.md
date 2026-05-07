@@ -1,4 +1,4 @@
-# EnterpriseDiagnostics
+# EnterpriseDiagnostics - Durable MAF Agents with Catalyst
 
 This repo contains an agentic application that runs a full diagnostic sweep on the U.S.S. Enterprise. The application runs seven independent LLM-driven analyses in parallel — hull integrity, life support, warp core, shields, weapons, navigation, and transporter — has a prioritization agent rank the systems and assign actions, composes a deterministic summary, and (when any system is flagged for `IMMEDIATE` action) dispatches a bridge-notification activity to acknowledge the alert.
 
