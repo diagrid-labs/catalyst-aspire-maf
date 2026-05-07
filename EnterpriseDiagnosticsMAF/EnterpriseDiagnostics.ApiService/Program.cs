@@ -6,19 +6,10 @@ using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using EnterpriseDiagnostics.ApiService.Tools;
 using EnterpriseDiagnostics.ApiService.Workflows;
-using OpenAI;
-
-const string Model = "gpt-4o-mini";
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
-
-var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
-    ?? throw new InvalidOperationException("OPENAI_API_KEY environment variable is not set.");
-
-builder.Services.AddSingleton<IChatClient>(_ =>
-    new OpenAIClient(apiKey).GetChatClient(Model).AsIChatClient());
 
 AITool[] diagnosticsTools = [AIFunctionFactory.Create(MetricTools.GetRandomPercentage)];
 
@@ -29,24 +20,15 @@ builder.Services.AddDaprAgents(
             opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
             opt.RegisterActivity<NotifyBridgeActivity>();
         })
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Hull, name: "HullIntegrityAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.LifeSupport, name: "LifeSupportAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.WarpCore, name: "WarpCoreAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Shields, name: "ShieldsAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Weapons, name: "WeaponsAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Navigation, name: "NavigationAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Transporter, name: "TransporterAgent", tools: diagnosticsTools))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Prioritize, name: "PrioritizeDiagnosticsAgent"))
-    .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Summarize, name: "SummarizeDiagnosticsAgent"));
+    .WithAgent("HullIntegrityAgent", "conversation", AgentInstructions.Hull, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("LifeSupportAgent", "conversation", AgentInstructions.LifeSupport, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("WarpCoreAgent", "conversation", AgentInstructions.WarpCore, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("ShieldsAgent", "conversation", AgentInstructions.Shields, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("WeaponsAgent", "conversation", AgentInstructions.Weapons, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("NavigationAgent", "conversation", AgentInstructions.Navigation, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("TransporterAgent", "conversation", AgentInstructions.Transporter, tools: diagnosticsTools, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("PrioritizeDiagnosticsAgent", "conversation", AgentInstructions.Prioritize, serviceLifetime: ServiceLifetime.Singleton)
+    .WithAgent("SummarizeDiagnosticsAgent", "conversation", AgentInstructions.Summarize, serviceLifetime: ServiceLifetime.Singleton);
 
 var app = builder.Build();
 
