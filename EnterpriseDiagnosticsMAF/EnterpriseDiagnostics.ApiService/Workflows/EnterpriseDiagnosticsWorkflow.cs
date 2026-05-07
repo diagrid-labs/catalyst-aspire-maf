@@ -12,15 +12,15 @@ public sealed partial class EnterpriseDiagnosticsWorkflow : Workflow<Diagnostics
         var logger = context.CreateReplaySafeLogger<EnterpriseDiagnosticsWorkflow>();
         LogStart(logger, context.InstanceId, input.Stardate);
 
-        var hullAgent = context.GetAgent("HullIntegrityAgent");
-        var lifeSupportAgent = context.GetAgent("LifeSupportAgent");
-        var warpCoreAgent = context.GetAgent("WarpCoreAgent");
-        var shieldsAgent = context.GetAgent("ShieldsAgent");
-        var weaponsAgent = context.GetAgent("WeaponsAgent");
-        var navigationAgent = context.GetAgent("NavigationAgent");
-        var transporterAgent = context.GetAgent("TransporterAgent");
-        var prioritizeAgent = context.GetAgent("PrioritizeDiagnosticsAgent");
-        var summarizeAgent = context.GetAgent("SummarizeDiagnosticsAgent");
+        var hullAgent = context.GetAgent(AgentNames.Hull);
+        var lifeSupportAgent = context.GetAgent(AgentNames.LifeSupport);
+        var warpCoreAgent = context.GetAgent(AgentNames.WarpCore);
+        var shieldsAgent = context.GetAgent(AgentNames.Shields);
+        var weaponsAgent = context.GetAgent(AgentNames.Weapons);
+        var navigationAgent = context.GetAgent(AgentNames.Navigation);
+        var transporterAgent = context.GetAgent(AgentNames.Transporter);
+        var prioritizeAgent = context.GetAgent(AgentNames.Prioritize);
+        var summarizeAgent = context.GetAgent(AgentNames.Summarize);
 
         var hullTask = context.RunAgentAndDeserializeAsync<HullIntegrityResult>(
             agent: hullAgent,

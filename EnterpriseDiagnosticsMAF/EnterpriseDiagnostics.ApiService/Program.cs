@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
 using Dapr.Workflow;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
+using EnterpriseDiagnostics.ApiService;
 using EnterpriseDiagnostics.ApiService.Activities;
 using EnterpriseDiagnostics.ApiService.Models;
 using EnterpriseDiagnostics.ApiService.Tools;
@@ -30,23 +31,23 @@ builder.Services.AddDaprAgents(
             opt.RegisterActivity<NotifyBridgeActivity>();
         })
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Hull, name: "HullIntegrityAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.Hull, name: AgentNames.Hull, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.LifeSupport, name: "LifeSupportAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.LifeSupport, name: AgentNames.LifeSupport, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.WarpCore, name: "WarpCoreAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.WarpCore, name: AgentNames.WarpCore, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Shields, name: "ShieldsAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.Shields, name: AgentNames.Shields, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Weapons, name: "WeaponsAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.Weapons, name: AgentNames.Weapons, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Navigation, name: "NavigationAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.Navigation, name: AgentNames.Navigation, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Transporter, name: "TransporterAgent", tools: diagnosticsTools))
+        .AsAIAgent(instructions: AgentInstructions.Transporter, name: AgentNames.Transporter, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Prioritize, name: "PrioritizeDiagnosticsAgent"))
+        .AsAIAgent(instructions: AgentInstructions.Prioritize, name: AgentNames.Prioritize))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Summarize, name: "SummarizeDiagnosticsAgent"));
+        .AsAIAgent(instructions: AgentInstructions.Summarize, name: AgentNames.Summarize));
 
 var app = builder.Build();
 
