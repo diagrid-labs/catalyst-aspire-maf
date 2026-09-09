@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.AI;
 using Dapr.Workflow;
+using Diagrid.AI.Microsoft.AgentFramework.Abstractions;
+using Diagrid.AI.Microsoft.AgentFramework.Catalyst;
 using Diagrid.AI.Microsoft.AgentFramework.Hosting;
 using EnterpriseDiagnostics.ApiService;
 using EnterpriseDiagnostics.ApiService.Activities;
@@ -24,12 +26,7 @@ builder.Services.AddSingleton<IChatClient>(_ =>
 AITool[] diagnosticsTools = [AIFunctionFactory.Create(MetricTools.GetRandomPercentage)];
 
 builder.Services.AddDaprAgents(
-        opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default),
-        opt =>
-        {
-            opt.RegisterWorkflow<EnterpriseDiagnosticsWorkflow>();
-            opt.RegisterActivity<NotifyBridgeActivity>();
-        })
+        opt => opt.AddContext(() => DiagnosticsAgentJsonContext.Default))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
         .AsAIAgent(instructions: AgentInstructions.Hull, name: AgentNames.Hull, tools: diagnosticsTools))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
@@ -47,7 +44,17 @@ builder.Services.AddDaprAgents(
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
         .AsAIAgent(instructions: AgentInstructions.Prioritize, name: AgentNames.Prioritize))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
-        .AsAIAgent(instructions: AgentInstructions.Summarize, name: AgentNames.Summarize));
+        .AsAIAgent(instructions: AgentInstructions.Summarize, name: AgentNames.Summarize))
+    // Registers the agents in the Catalyst agent registry so they appear under Agents in the
+    // Catalyst console. ResourceName is the Dapr state store the metadata is written to, and
+    // must match the component provisioned by the AppHost.
+    .WithCatalyst(new DiagridCatalystOptions
+    {
+        Registry = new RegistryMetadata
+        {
+            ResourceName = "agent-registry",
+        },
+    });
 
 var app = builder.Build();
 

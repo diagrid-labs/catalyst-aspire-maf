@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Diagrid.Aspire.Hosting.Catalyst" Version="0.0.5" />
+    <PackageReference Include="Diagrid.Aspire.Hosting.Catalyst" Version="1.0.0" />
   </ItemGroup>
 
 </Project>

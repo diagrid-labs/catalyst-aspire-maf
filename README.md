@@ -77,7 +77,31 @@ Each agent returns strict JSON that is deserialized — via a source-generated `
   diagrid login
   ```
 
-3. Start the Aspire application from the `EnterpriseDiagnosticsMAF` folder:
+3. Create the Catalyst project and register `maf-app` as an **Agent**:
+
+  ```shell
+  diagrid project create aspire-maf --enable-managed-workflow --deploy-managed-kv --wait --use
+  diagrid agent create maf-app --wait
+  ```
+
+> This step is required and cannot be done from the AppHost: `Diagrid.Aspire.Hosting.Catalyst`
+> only creates plain App IDs (`diagrid appid create`), and the agent registry files each agent
+> under an App ID that is backed by an Agent. Create the project first so the AppHost attaches
+> to the existing one instead of racing to create `maf-app` as a plain App ID.
+>
+> `diagrid agent create` also provisions the `agent-registry` state store the ApiService writes
+> agent metadata to. It is a managed connection, so it does not appear in `diagrid component list`
+> — and the AppHost must not try to create it, because the integration has no `--ignore-if-exists`
+> and fails provisioning outright with "Resource already exists".
+>
+> `--deploy-managed-kv` is required here too, and cannot be deferred to the AppHost.
+> `AddCatalystProject` always issues a `diagrid project create` (there is no existence check —
+> reuse of an existing project relies on the CLI not treating a repeat create as an error), and it
+> hardcodes `--deploy-managed-kv=false --deploy-managed-pubsub=false`. `EnableManagedWorkflow` is
+> the only project setting the AppHost can influence, so a project first created by `aspire run`
+> has no key/value store at all.
+
+4. Start the Aspire application from the `EnterpriseDiagnosticsMAF` folder:
 
   ```shell
   aspire run
@@ -87,10 +111,10 @@ Each agent returns strict JSON that is deserialized — via a source-generated `
 
 This launches the Aspire AppHost which:
 
-- Provisions a **Diagrid Catalyst** project (`aspire-wf`) with a managed workflow state store.
-- Starts the **ApiService** (`wf-app`) wired to that Catalyst project, with `OPENAI_API_KEY` forwarded into its environment.
+- Attaches to (or provisions) the **Diagrid Catalyst** project (`aspire-maf`) with a managed workflow state store.
+- Starts the **ApiService** (`maf-app`) wired to that Catalyst project, with `OPENAI_API_KEY` forwarded into its environment.
 
-Navigate to the Aspire dashboard, open the Resources page, and click on the Catalyst Dashboard link. Open the `aspire-wf` project via the *Projects* item in the left menu, then select the [Workflows item](https://catalyst.diagrid.io/workflows/executions) under *Operate* in the left menu. Once you've started a workflow with the `start` endpoint you can view the workflow state here.
+Navigate to the Aspire dashboard, open the Resources page, and click on the Catalyst Dashboard link. Open the `aspire-maf` project via the *Projects* item in the left menu, then select the [Workflows item](https://catalyst.diagrid.io/workflows/executions) under *Operate* in the left menu. Once you've started a workflow with the `start` endpoint you can view the workflow state here.
 
 ## Endpoints
 
@@ -160,4 +184,4 @@ You can also drive these requests from [`EnterpriseDiagnostics.ApiService/Enterp
 
 ## Inspecting workflow execution
 
-Workflow instances run against the managed state store in your Diagrid Catalyst project. To inspect them, open the **Diagrid Catalyst console** and navigate to the `aspire-wf` project — you can browse workflow instances, view orchestration history, inspect every agent (LLM) call as a workflow activity with its inputs and outputs, and watch state transitions in real time.
+Workflow instances run against the managed state store in your Diagrid Catalyst project. To inspect them, open the **Diagrid Catalyst console** and navigate to the `aspire-maf` project — you can browse workflow instances, view orchestration history, inspect every agent (LLM) call as a workflow activity with its inputs and outputs, and watch state transitions in real time.
