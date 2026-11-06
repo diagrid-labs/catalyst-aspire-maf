@@ -45,8 +45,8 @@ builder.Services.AddDaprAgents(
         .AsAIAgent(instructions: AgentInstructions.Prioritize, name: AgentNames.Prioritize))
     .WithAgent(sp => sp.GetRequiredService<IChatClient>()
         .AsAIAgent(instructions: AgentInstructions.Summarize, name: AgentNames.Summarize))
-    // Registers the agents in the Catalyst agent registry so they appear under Agents in the
-    // Catalyst console. ResourceName is the Dapr state store the metadata is written to, and
+    // Registers the agents in the Diagrid agent registry so they appear under Agents in the
+    // Diagrid Console. ResourceName is the Dapr state store the metadata is written to, and
     // must match the component provisioned by the AppHost.
     .WithCatalyst(new DiagridCatalystOptions
     {
