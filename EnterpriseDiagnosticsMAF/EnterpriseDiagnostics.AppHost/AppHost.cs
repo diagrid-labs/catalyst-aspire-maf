@@ -7,7 +7,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 var openAiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")
     ?? throw new InvalidOperationException("OPENAI_API_KEY environment variable is not set.");
 
-// USE_CATALYST=true runs against Diagrid Catalyst, anything else runs against the locally installed Dapr.
+// USE_CATALYST=true runs against Diagrid, anything else runs against the locally installed Dapr.
 var useCatalyst = bool.TryParse(Environment.GetEnvironmentVariable("USE_CATALYST"), out var catalyst) && catalyst;
 
 var apiService = builder.AddProject<Projects.EnterpriseDiagnostics_ApiService>("maf-app")
@@ -15,7 +15,7 @@ var apiService = builder.AddProject<Projects.EnterpriseDiagnostics_ApiService>("
 
 if (useCatalyst)
 {
-    // This configures a new project in Catalyst with a managed state store for workflow state.
+    // This configures a new project in Diagrid with a managed state store for workflow state.
     // The `agent-registry` state store the ApiService writes agent metadata to is NOT created here:
     // `diagrid agent create` provisions it as a managed connection, so creating it from the AppHost
     // fails with "Resource already exists". See the README for the required pre-provisioning step.
@@ -24,7 +24,7 @@ if (useCatalyst)
         EnableManagedWorkflow = true
     });
 
-    // The apiService uses Catalyst instead of a local Dapr sidecar.
+    // The apiService uses Diagrid instead of a local Dapr sidecar.
     apiService.WithCatalyst(catalystProject);
 }
 else

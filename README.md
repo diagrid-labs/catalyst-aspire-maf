@@ -1,10 +1,10 @@
-# EnterpriseDiagnostics - Durable MAF Agents with Catalyst
+# EnterpriseDiagnostics - Durable MAF Agents with Diagrid
 
 This repo contains an agentic application that runs a full diagnostic sweep on the U.S.S. Enterprise. The application runs seven independent LLM-driven analyses in parallel — hull integrity, life support, warp core, shields, weapons, navigation, and transporter — has a prioritization agent rank the systems and assign actions, composes a deterministic summary, and (when any system is flagged for `IMMEDIATE` action) dispatches a bridge-notification activity to acknowledge the alert.
 
 ## Contents
 
-- `EnterpriseDiagnostics.AppHost` — Aspire AppHost that runs the ApiService against either **Diagrid Catalyst** or a **locally installed Dapr** (selected with the `USE_CATALYST` environment variable), and forwards `OPENAI_API_KEY` to the service.
+- `EnterpriseDiagnostics.AppHost` — Aspire AppHost that runs the ApiService against either **Diagrid** or a **locally installed Dapr** (selected with the `USE_CATALYST` environment variable), and forwards `OPENAI_API_KEY` to the service.
 - `EnterpriseDiagnostics.ApiService` — ASP.NET Core service that hosts the diagnostics workflow, the nine agents, and the HTTP endpoints used to start and observe runs.
 - `EnterpriseDiagnostics.ServiceDefaults` — Aspire shared project providing OpenTelemetry, health checks, service discovery, and resilience defaults.
 
@@ -14,7 +14,7 @@ The solution is built on:
 
 - **.NET 10 / ASP.NET Core** — host for the workflow service.
 - **.NET Aspire** — orchestrates the local development topology (AppHost + ServiceDefaults).
-- **Dapr / Diagrid Catalyst** — the workflow runtime. Locally installed Dapr (sidecar started by the AppHost, with Valkey as the state store) or Diagrid Catalyst (managed workflow runtime, provisioned by the AppHost via `AddCatalystProject(...)` with `EnableManagedWorkflow = true`).
+- **Dapr / Diagrid** — the workflow runtime. Locally installed Dapr (sidecar started by the AppHost, with Valkey as the state store) or Diagrid (managed workflow runtime, provisioned by the AppHost via `AddCatalystProject(...)` with `EnableManagedWorkflow = true`).
 - **Microsoft Agent Framework** (`Microsoft.Agents.AI`) — the `ChatClientAgent` abstraction used for each diagnostic role.
 - **Diagrid.AI.Microsoft.AgentFramework** — Diagrid integration that runs each agent invocation as a Dapr Workflow activity, so agent calls are checkpointed and replay-safe.
 - **OpenAI** (`gpt-4o-mini`) — chat backend for the agents, accessed via `Microsoft.Extensions.AI.OpenAI`.
@@ -23,13 +23,13 @@ The solution is built on:
 
 The AppHost supports two modes, selected by the `USE_CATALYST` environment variable:
 
-| | Local Dapr (default) | Diagrid Catalyst |
+| | Local Dapr (default) | Diagrid |
 |---|---|---|
 | Selected by | `USE_CATALYST` unset, or any value other than `true` | `USE_CATALYST=true` |
-| Workflow runtime | Dapr sidecar from your local Dapr install | Managed Catalyst project `aspire-maf` |
-| Workflow state | Valkey container (`workflow-store` in `Resources/state.yaml`) | Catalyst managed state store |
+| Workflow runtime | Dapr sidecar from your local Dapr install | Managed Diagrid project `aspire-maf` |
+| Workflow state | Valkey container (`workflow-store` in `Resources/state.yaml`) | Diagrid managed state store |
 | Agent registry | `agent-registry` component on the same Valkey | `agent-registry` managed connection (created by `diagrid agent create`) |
-| Inspect runs with | [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) (started by the AppHost, http://localhost:9090) | Catalyst console |
+| Inspect runs with | [Diagrid Dapr Dev Dashboard](https://github.com/diagridio/dev-dashboard) (started by the AppHost, http://localhost:9090) | Diagrid Console |
 
 ### Prerequisites
 
@@ -55,12 +55,12 @@ Additionally for **local Dapr** mode:
   iwr -useb https://raw.githubusercontent.com/diagridio/dev-dashboard/main/scripts/install.ps1 | iex
   ```
 
-Additionally for **Catalyst** mode:
+Additionally for **Diagrid** mode:
 
-- [Diagrid CLI](https://docs.diagrid.io/catalyst/references/cli-reference/install-diagrid-cli)
-- A [Diagrid Catalyst](https://www.diagrid.io/catalyst) account, signed in via `diagrid login`
+- [Diagrid CLI](https://docs.diagrid.io/references/diagrid/diagrid-cli-intro/)
+- A [Diagrid](https://www.diagrid.io/catalyst) account, signed in via `diagrid login`
 
-In local Dapr mode the AppHost manages Valkey as a container, so do not run Redis or Valkey yourself. In Catalyst mode workflow state is hosted by Diagrid Catalyst and no local state store or Dapr sidecar is needed.
+In local Dapr mode the AppHost manages Valkey as a container, so do not run Redis or Valkey yourself. In Diagrid mode workflow state is hosted by Diagrid and no local state store or Dapr sidecar is needed.
 
 ## Workflow
 
@@ -94,7 +94,7 @@ Each agent returns strict JSON that is deserialized — via a source-generated `
 
 ## Run the application
 
-Choose a mode: [local Dapr](#option-a-local-dapr) or [Diagrid Catalyst](#option-b-diagrid-catalyst). In both cases, first set the OpenAI key in the shell that will launch Aspire:
+Choose a mode: [local Dapr](#option-a-local-dapr) or [Diagrid](#option-b-diagrid). In both cases, first set the OpenAI key in the shell that will launch Aspire:
 
 ```shell
 export OPENAI_API_KEY=sk-...    # Linux/macOS
@@ -115,22 +115,22 @@ The AppHost then:
 - Starts the **ApiService** (`maf-app`) with a Dapr sidecar that loads the components from `Resources/`, and waits for Valkey to be ready.
 - Starts the **Diagrid Dapr Dev Dashboard** as the `dapr-dev-dashboard` resource (http://localhost:9090) to inspect workflow instances, their history, and sidecar logs.
 
-### Option B: Diagrid Catalyst
+### Option B: Diagrid
 
-1. Select Catalyst mode in the shell that will launch Aspire:
+1. Select Diagrid mode in the shell that will launch Aspire:
 
   ```shell
   export USE_CATALYST=true        # Linux/macOS
   $env:USE_CATALYST="true"        # Windows PowerShell
   ```
 
-2. Login into Diagrid Catalyst, and follow the instructions:
+2. Login into Diagrid, and follow the instructions:
 
   ```shell
   diagrid login
   ```
 
-3. Create the Catalyst project and register `maf-app` as an **Agent**:
+3. Create the Diagrid project and register `maf-app` as an **Agent**:
 
   ```shell
   diagrid project create aspire-maf --enable-managed-workflow --deploy-managed-kv --wait --use
@@ -164,10 +164,10 @@ The AppHost then:
 
 With `USE_CATALYST=true` the AppHost:
 
-- Attaches to (or provisions) the **Diagrid Catalyst** project (`aspire-maf`) with a managed workflow state store.
-- Starts the **ApiService** (`maf-app`) wired to that Catalyst project, with `OPENAI_API_KEY` forwarded into its environment.
+- Attaches to (or provisions) the **Diagrid** project (`aspire-maf`) with a managed workflow state store.
+- Starts the **ApiService** (`maf-app`) wired to that Diagrid project, with `OPENAI_API_KEY` forwarded into its environment.
 
-Navigate to the Aspire dashboard (in either mode), open the Resources page, and click on the Catalyst Dashboard link. Open the `aspire-maf` project via the *Projects* item in the left menu, then select the [Workflows item](https://catalyst.diagrid.io/workflows/executions) under *Operate* in the left menu. Once you've started a workflow with the `start` endpoint you can view the workflow state here.
+Navigate to the Aspire dashboard (in either mode), open the Resources page, and click on the Diagrid Console link. Open the `aspire-maf` project via the *Projects* item in the left menu, then select the [Workflows item](https://catalyst.diagrid.io/workflows/executions) under *Operate* in the left menu. Once you've started a workflow with the `start` endpoint you can view the workflow state here.
 
 ## Endpoints
 
@@ -239,4 +239,4 @@ You can also drive these requests from [`EnterpriseDiagnostics.ApiService/Enterp
 
 In **local Dapr** mode, open the **Diagrid Dapr Dev Dashboard** at http://localhost:9090 (the `dapr-dev-dashboard` resource in the Aspire dashboard) to browse workflow instances, their execution history and sidecar logs.
 
-In **Catalyst** mode, workflow instances run against the managed state store in your Diagrid Catalyst project. To inspect them, open the **Diagrid Catalyst console** and navigate to the `aspire-maf` project — you can browse workflow instances, view orchestration history, inspect every agent (LLM) call as a workflow activity with its inputs and outputs, and watch state transitions in real time.
+In **Diagrid** mode, workflow instances run against the managed state store in your Diagrid project. To inspect them, open the **Diagrid console** and navigate to the `aspire-maf` project — you can browse workflow instances, view orchestration history, inspect every agent (LLM) call as a workflow activity with its inputs and outputs, and watch state transitions in real time.

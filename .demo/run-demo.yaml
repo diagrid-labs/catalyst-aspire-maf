@@ -40,7 +40,7 @@ scenes:
       - action: open
         path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/EnterpriseDiagnostics.ApiService.http
       - action: showInfoMessage
-        message: Check the Catalyst web console
+        message: Check the Diagrid Console
   - id: scene-mon4xgag-jt26
     title: Stop app
     moves:
@@ -68,7 +68,7 @@ scenes:
       - action: open
         path: EnterpriseDiagnosticsMAF/EnterpriseDiagnostics.ApiService/EnterpriseDiagnostics.ApiService.http
       - action: showInfoMessage
-        message: Check the Catalyst web console
+        message: Check the Diagrid Console
   - id: demo-mon51u01-miif
     title: Stop app (tool failure)
     moves:
@@ -91,7 +91,7 @@ scenes:
         insertTypingMode: character-by-character
         insertTypingSpeed: 75
       - action: showInfoMessage
-        message: Check the Catalyst web console
+        message: Check the Diagrid Console
   - id: demo-mon53djf-smqc
     title: Stop app (after tool fix)
     moves:
